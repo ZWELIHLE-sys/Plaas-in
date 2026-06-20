@@ -6,16 +6,17 @@ import { StatsGrid } from '@/components/StatsGrid'
 import { HerdBreakdown } from '@/components/HerdBreakdown'
 import { FarmerRegistry } from '@/components/FarmerRegistry'
 import { RecentLivestock } from '@/components/RecentLivestock'
+import { HealthLog } from '@/components/HealthLog'
 import styles from './page.module.css'
 
 // Always render fresh data (this reads the database on each request).
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
-  const { farmers, animals, healthCount, salesCount, error } = await getDashboardData()
+  const { farmers, animals, health, salesCount, error } = await getDashboardData()
 
   const activeAnimals = animals.filter((a) => a.status === 'Active')
-  const recordsProcessed = animals.length + healthCount + salesCount
+  const recordsProcessed = animals.length + health.length + salesCount
 
   const herdCounts = new Map<string, number>()
   for (const a of activeAnimals) {
@@ -53,6 +54,7 @@ export default async function DashboardPage() {
         <HerdBreakdown counts={[...herdCounts.entries()]} />
         <FarmerRegistry farmers={farmers} animalCounts={animalCounts} />
         <RecentLivestock animals={animals} farmerNames={farmerNames} />
+        <HealthLog records={health} />
 
         <p className={styles.footnote}>
           Records are stored securely and are never deleted — sold or deceased animals keep their
