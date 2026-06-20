@@ -13,6 +13,8 @@ Intents:
 - "set_profile": registering themselves / giving name, farm name, or area/location.
 - "log_health": recording a dipping, vaccination, treatment, deworming or injection.
 - "show_health": asking for health/vaccination history.
+- "log_sale": recording a sale of livestock (sold ... for R... to ... at ...).
+- "show_sales": asking for sales / income / ledger history.
 - "other": greetings, questions, or anything else.
 
 Rules:
@@ -22,7 +24,8 @@ Rules:
 - SA breeds: Cattle = Nguni, Boran, Brahman, Angus, Jersey, Holstein; Goat = Boer, Kalahari Red, Saanen; Sheep = Dorper, Merino.
 - register_birth: set birth.mother_tag / birth.father_tag to the parents' tags, plus species/gender/breed and animal_id if the calf was given a tag.
 - show_bloodline: set target_tag to the animal whose lineage is asked for.
-- log_health: action_type is Dipping, Vaccination or Treatment; target = which animals; chemical_used = vaccine/medicine/disease; withdrawal_days only if stated.`
+- log_health: action_type is Dipping, Vaccination or Treatment; target = which animals; chemical_used = vaccine/medicine/disease; withdrawal_days only if stated.
+- log_sale: item_details = what was sold (tag like "Bull-02" or "2 goats"); sale_type = Direct, Auction or Butchery; amount = rand number; set buyer_name and sale_location when given.`
 
 export const TOOL: Anthropic.Tool = {
   name: 'record_message',
@@ -40,6 +43,8 @@ export const TOOL: Anthropic.Tool = {
           'set_profile',
           'log_health',
           'show_health',
+          'log_sale',
+          'show_sales',
           'other',
         ],
       },
@@ -92,6 +97,18 @@ export const TOOL: Anthropic.Tool = {
           chemical_used: { type: 'string' },
           withdrawal_days: { type: 'integer', minimum: 0 },
           notes: { type: 'string' },
+        },
+      },
+      sale: {
+        type: 'object',
+        description: 'Sale details (only when intent is log_sale).',
+        properties: {
+          item_details: { type: 'string' },
+          product_type: { type: 'string' },
+          sale_type: { type: 'string', enum: ['Direct', 'Auction', 'Butchery'] },
+          buyer_name: { type: 'string' },
+          sale_location: { type: 'string' },
+          amount: { type: 'number', minimum: 0 },
         },
       },
     },

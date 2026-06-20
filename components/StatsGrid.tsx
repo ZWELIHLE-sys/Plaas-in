@@ -5,19 +5,19 @@ export function StatsGrid({
   farmers,
   livestock,
   records,
-  sales,
+  income,
 }: {
   farmers: number
   livestock: number
   records: number
-  sales: number
+  income: string
 }) {
   return (
     <section className={styles.grid}>
       <StatCard label="Farmers" value={farmers} />
       <StatCard label="Active livestock" value={livestock} />
       <StatCard label="Records processed" value={records} />
-      <StatCard label="Sales logged" value={sales} />
+      <StatCard label="Income" value={income} />
     </section>
   )
 }

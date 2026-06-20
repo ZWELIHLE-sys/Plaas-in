@@ -1,13 +1,13 @@
 // Read-side data access for the owner dashboard. Keeps all dashboard Supabase
 // queries in one place so the page component stays presentational.
 import { supabase } from '@/lib/supabase'
-import type { Animal, Farmer, HealthRecord } from '@/lib/types'
+import type { Animal, Farmer, HealthRecord, SaleRecord } from '@/lib/types'
 
 export type DashboardData = {
   farmers: Farmer[]
   animals: Animal[]
   health: HealthRecord[]
-  salesCount: number
+  sales: SaleRecord[]
   error: string | null
 }
 
@@ -25,14 +25,17 @@ export async function getDashboardData(): Promise<DashboardData> {
       .from('health_log')
       .select('id,farmer_id,date,action_type,target,chemical_used,withdrawal_until')
       .order('date', { ascending: false }),
-    supabase.from('sales').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('sales')
+      .select('id,farmer_id,date,item_details,sale_type,buyer_name,sale_location,amount')
+      .order('date', { ascending: false }),
   ])
 
   return {
     farmers: (farmersRes.data ?? []) as Farmer[],
     animals: (animalsRes.data ?? []) as Animal[],
     health: (healthRes.data ?? []) as HealthRecord[],
-    salesCount: salesRes.count ?? 0,
+    sales: (salesRes.data ?? []) as SaleRecord[],
     error: farmersRes.error?.message ?? animalsRes.error?.message ?? null,
   }
 }

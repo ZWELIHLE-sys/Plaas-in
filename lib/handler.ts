@@ -7,6 +7,7 @@ import { registerAnimals, herdReport } from '@/lib/livestock'
 import { registerBirth, showBloodline } from '@/lib/bloodline'
 import { updateProfile } from '@/lib/profile'
 import { logHealth, healthReport } from '@/lib/health'
+import { logSale, salesReport } from '@/lib/sales'
 import { BRAND } from '@/lib/constants'
 
 export async function processMessage(from: string, text: string): Promise<string> {
@@ -38,6 +39,12 @@ export async function processMessage(from: string, text: string): Promise<string
     case 'show_health':
       reply = await healthReport(farmer.id)
       break
+    case 'log_sale':
+      reply = await logSale(farmer.id, parsed.sale ?? {})
+      break
+    case 'show_sales':
+      reply = await salesReport(farmer.id)
+      break
     default:
       reply = helpText()
   }
@@ -60,8 +67,10 @@ function helpText(): string {
     '• Added 3 Boer goats',
     '• New calf born. Mother Cow-04, Father Bull-01',
     '• Vaccinated 10 calves for Blackquarter',
+    '• Sold Bull-02 at Dundee Auction for R18,000 to Mr Sithole',
     '• Show herd',
     '• Show health',
+    '• Show sales',
     '• Show bloodline of BOR-001',
   ].join('\n')
 }

@@ -33,3 +33,14 @@ export type HealthRecord = {
   chemical_used: string | null
   withdrawal_until: string | null
 }
+
+export type SaleRecord = {
+  id: string
+  farmer_id: string
+  date: string
+  item_details: string | null
+  sale_type: string | null
+  buyer_name: string | null
+  sale_location: string | null
+  amount: number | null
+}
