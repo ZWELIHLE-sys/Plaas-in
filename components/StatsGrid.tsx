@@ -1,4 +1,5 @@
 import { StatCard } from './StatCard'
+import styles from './StatsGrid.module.css'
 
 export function StatsGrid({
   farmers,
@@ -12,7 +13,7 @@ export function StatsGrid({
   sales: number
 }) {
   return (
-    <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <section className={styles.grid}>
       <StatCard label="Farmers" value={farmers} />
       <StatCard label="Active livestock" value={livestock} />
       <StatCard label="Records processed" value={records} />

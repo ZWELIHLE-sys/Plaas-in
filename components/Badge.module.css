@@ -1,0 +1,33 @@
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.active {
+  background: var(--tone-active-bg);
+  color: var(--tone-active-fg);
+}
+
+.info {
+  background: var(--tone-info-bg);
+  color: var(--tone-info-fg);
+}
+
+.warn {
+  background: var(--tone-warn-bg);
+  color: var(--tone-warn-fg);
+}
+
+.neutral {
+  background: var(--tone-neutral-bg);
+  color: var(--tone-neutral-fg);
+}
+
+.purple {
+  background: var(--tone-purple-bg);
+  color: var(--tone-purple-fg);
+}

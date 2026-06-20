@@ -6,6 +6,7 @@ import { StatsGrid } from '@/components/StatsGrid'
 import { HerdBreakdown } from '@/components/HerdBreakdown'
 import { FarmerRegistry } from '@/components/FarmerRegistry'
 import { RecentLivestock } from '@/components/RecentLivestock'
+import styles from './page.module.css'
 
 // Always render fresh data (this reads the database on each request).
 export const dynamic = 'force-dynamic'
@@ -33,12 +34,12 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="min-h-full bg-stone-50 text-stone-900">
+    <main className={styles.page}>
       <Header />
 
-      <div className="mx-auto max-w-6xl space-y-8 px-6 py-8">
+      <div className={styles.container}>
         {error && (
-          <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-800">
+          <div className={styles.error}>
             Could not load data: {error}. Check your Supabase keys in <code>.env.local</code>.
           </div>
         )}
@@ -53,7 +54,7 @@ export default async function DashboardPage() {
         <FarmerRegistry farmers={farmers} animalCounts={animalCounts} />
         <RecentLivestock animals={animals} farmerNames={farmerNames} />
 
-        <p className="pt-2 text-center text-sm text-stone-400">
+        <p className={styles.footnote}>
           Records are stored securely and are never deleted — sold or deceased animals keep their
           history.
         </p>

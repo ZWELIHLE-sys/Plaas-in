@@ -1,0 +1,43 @@
+.header {
+  background: linear-gradient(135deg, var(--sa-green-dark), var(--wa-teal));
+  color: #fff;
+  border-bottom: 3px solid var(--sa-gold);
+}
+
+.inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 1.4rem 1.5rem;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.name {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.slogan {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sa-gold);
+  font-style: italic;
+}
+
+.tagline {
+  margin-top: 0.15rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.82);
+}

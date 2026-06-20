@@ -1,26 +1,86 @@
-@import "tailwindcss";
+/* Plaas-In design system — global theme tokens + base reset.
+   Bespoke (no utility framework): every component styles itself via its own
+   .module.css file using these CSS variables. Palette blends the South African
+   agricultural identity with the familiar WhatsApp green. */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand palette */
+  --sa-green: #007a4d; /* SA flag green — primary */
+  --sa-green-dark: #045c3a;
+  --sa-gold: #ffb612; /* SA flag gold — accents/highlights */
+  --wa-green: #25d366; /* WhatsApp green */
+  --wa-teal: #075e54; /* WhatsApp dark teal */
+  --soil: #6b4f3a; /* earth/soil brown */
+
+  /* Neutrals */
+  --bg: #f5f7f3;
+  --surface: #ffffff;
+  --border: #e4e8df;
+  --text: #1e2421;
+  --text-muted: #6b746c;
+
+  /* Status tones */
+  --tone-active-bg: #e3f4ea;
+  --tone-active-fg: #0a6b3f;
+  --tone-info-bg: #e4eefb;
+  --tone-info-fg: #1f5fae;
+  --tone-warn-bg: #fdf0d8;
+  --tone-warn-fg: #95650a;
+  --tone-neutral-bg: #ececec;
+  --tone-neutral-fg: #555b54;
+  --tone-purple-bg: #efe6fb;
+  --tone-purple-fg: #6b3fa0;
+
+  /* Shape + depth */
+  --radius: 14px;
+  --radius-sm: 9px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(16, 32, 20, 0.06), 0 1px 3px rgba(16, 32, 20, 0.05);
+  --shadow-md: 0 6px 22px rgba(16, 32, 20, 0.09);
+
+  /* Layout */
+  --maxw: 1120px;
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+code {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.85em;
+  background: var(--tone-neutral-bg);
+  padding: 0.1em 0.4em;
+  border-radius: 5px;
 }
