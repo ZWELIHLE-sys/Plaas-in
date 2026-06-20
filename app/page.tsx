@@ -6,6 +6,7 @@ import { StatsGrid } from '@/components/StatsGrid'
 import { HerdBreakdown } from '@/components/HerdBreakdown'
 import { FarmerRegistry } from '@/components/FarmerRegistry'
 import { RecentLivestock } from '@/components/RecentLivestock'
+import { BloodlinePanel } from '@/components/BloodlinePanel'
 import { HealthLog } from '@/components/HealthLog'
 import { SalesLedger } from '@/components/SalesLedger'
 import { formatRand } from '@/lib/format'
@@ -62,7 +63,8 @@ export default async function DashboardPage() {
         />
         <HerdBreakdown counts={[...herdCounts.entries()]} />
         <FarmerRegistry farmers={farmers} animalCounts={animalCounts} />
-        <RecentLivestock animals={animals} farmerNames={farmerNames} tagById={tagById} />
+        <RecentLivestock animals={animals} farmerNames={farmerNames} />
+        <BloodlinePanel animals={animals} tagById={tagById} />
         <HealthLog records={health} />
         <SalesLedger sales={sales} />
 
