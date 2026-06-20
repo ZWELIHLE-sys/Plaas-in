@@ -1,10 +1,11 @@
 // Free, dependency-light keyword parser used when no Claude API key is set (or
 // if a Claude call fails). Covers the Phase 1 demo phrases: farmer profile,
-// animal registration, herd report, and health/vaccination logging + history.
+// animal registration, births + bloodline, herd report, and health logging.
 import { ALL_BREEDS } from '@/lib/constants'
-import type { ParsedHealth, ParsedMessage, ParsedProfile } from '@/lib/parser'
+import type { ParsedBirth, ParsedHealth, ParsedMessage, ParsedProfile } from '@/lib/parser'
 
-const REPORT_WORDS = /\b(show|report|history|list|summary|view)\b/i
+const REPORT_WORDS = /\b(show|report|history|list|summary|view|of)\b/i
+const TAG = /\b([A-Za-z]{2,}-\d+)\b/
 
 function detectSpecies(text: string): string | undefined {
   if (/\b(cattle|cow|cows|bull|bulls|calf|calves|ox|oxen|heifer|heifers|steer|steers)\b/i.test(text)) return 'Cattle'
@@ -43,8 +44,33 @@ function parseProfile(text: string): ParsedProfile | undefined {
   return Object.keys(profile).length ? profile : undefined
 }
 
+// "New calf born. Mother Cow-04, Father Bull-01"
+function parseBirth(text: string): ParsedBirth | undefined {
+  const mother = text.match(/\b(?:mother|dam|mum|mom)\s*[:#]?\s*([A-Za-z]{2,}-?\d+)/i)
+  const father = text.match(/\b(?:father|sire|dad)\s*[:#]?\s*([A-Za-z]{2,}-?\d+)/i)
+  if (!mother && !father) return undefined
+
+  // Describe the calf from the text with the parent clauses removed, so the
+  // mother's/father's own species/gender words don't get attributed to the calf.
+  let calfText = text
+  if (mother) calfText = calfText.replace(mother[0], ' ')
+  if (father) calfText = calfText.replace(father[0], ' ')
+
+  const birth: ParsedBirth = {}
+  if (mother) birth.mother_tag = mother[1].toUpperCase()
+  if (father) birth.father_tag = father[1].toUpperCase()
+  const tagMatch = calfText.match(/tag\s*[:#]?\s*([A-Za-z]{2,}-?\d+)/i)
+  if (tagMatch) birth.animal_id = tagMatch[1].toUpperCase()
+  const species = detectSpecies(calfText)
+  if (species) birth.species = species
+  const gender = detectGender(calfText)
+  if (gender) birth.gender = gender
+  const breed = detectBreed(calfText)
+  if (breed) birth.breed = breed
+  return birth
+}
+
 function parseHealth(text: string, action_type: string): ParsedHealth {
-  // What was treated: the words after the action verb, up to "for/with/withdrawal".
   const targetMatch = text.match(
     /(?:vaccinat\w*|dipp?\w*|treat\w*|deworm\w*|drench\w*|inject\w*)\s+(.+?)(?:\s+(?:for|with|withdrawal)\b|$)/i,
   )
@@ -52,17 +78,12 @@ function parseHealth(text: string, action_type: string): ParsedHealth {
   const forMatch = text.match(/\bfor\s+([A-Za-z0-9][A-Za-z0-9 -]*)/i)
   const withdrawalMatch = text.match(/withdrawal[^\d]*(\d{1,3})/i)
 
-  // Strip trailing time words / withdrawal phrases that aren't part of the value.
   const clean = (s?: string) =>
-    s
-      ?.replace(/\s+withdrawal.*$/i, '')
-      .replace(/\s+(today|yesterday)\b.*$/i, '')
-      .trim()
+    s?.replace(/\s+withdrawal.*$/i, '').replace(/\s+(today|yesterday)\b.*$/i, '').trim()
 
   const health: ParsedHealth = { action_type }
   const target = clean(targetMatch?.[1])
   if (target) health.target = target
-  // Prefer an explicit "with <medicine>"; else the "for <disease/vaccine>".
   const chemical = clean(withMatch?.[1]) || clean(forMatch?.[1])
   if (chemical) health.chemical_used = chemical
   if (withdrawalMatch) health.withdrawal_days = parseInt(withdrawalMatch[1], 10)
@@ -73,23 +94,30 @@ export function ruleBasedParse(text: string): ParsedMessage {
   const profile = parseProfile(text)
   if (profile) return { intent: 'set_profile', animals: [], profile }
 
+  const mentionsLineage = /\b(bloodline|lineage|pedigree|ancestry|family tree|parents)\b/i.test(text)
+  const tag = text.match(TAG)?.[1]?.toUpperCase()
+  if (mentionsLineage && REPORT_WORDS.test(text) && tag) {
+    return { intent: 'show_bloodline', animals: [], target_tag: tag }
+  }
+
+  const birth = parseBirth(text)
+  if (birth) return { intent: 'register_birth', animals: [], birth }
+
   const mentionsHealth = /\b(health|vaccin\w*|treatment|treated|dipping|dipped)\b/i.test(text)
   if (mentionsHealth && REPORT_WORDS.test(text)) {
     return { intent: 'show_health', animals: [] }
   }
-
   const healthAction = detectHealthAction(text)
   if (healthAction) {
     return { intent: 'log_health', animals: [], health: parseHealth(text, healthAction) }
   }
 
   const asksHerd = /\b(herd|count|total|livestock|stock|how many)\b/i.test(text)
-  const isAdding = /\b(add|added|adding|register|registered|new|got|bought|buy|born)\b/i.test(text)
+  const isAdding = /\b(add|added|adding|register|registered|new|got|bought|buy)\b/i.test(text)
   if ((asksHerd || REPORT_WORDS.test(text)) && !isAdding) {
     return { intent: 'show_herd', animals: [] }
   }
 
-  // Extract a tag first so its digits aren't mistaken for a quantity.
   const tagMatch =
     text.match(/tag\s*[:#]?\s*([A-Za-z]{2,}-?\d+)/i) || text.match(/\b([A-Za-z]{2,}-\d+)\b/)
   const animalId = tagMatch ? tagMatch[1].toUpperCase() : undefined

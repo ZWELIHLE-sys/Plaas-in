@@ -34,6 +34,12 @@ export default async function DashboardPage() {
     farmerNames[f.id] = f.name ?? f.phone
   }
 
+  // Map each animal's internal id -> its human tag, so parent links show as tags.
+  const tagById: Record<string, string> = {}
+  for (const a of animals) {
+    tagById[a.id] = a.animal_id ?? '—'
+  }
+
   return (
     <main className={styles.page}>
       <Header />
@@ -53,7 +59,7 @@ export default async function DashboardPage() {
         />
         <HerdBreakdown counts={[...herdCounts.entries()]} />
         <FarmerRegistry farmers={farmers} animalCounts={animalCounts} />
-        <RecentLivestock animals={animals} farmerNames={farmerNames} />
+        <RecentLivestock animals={animals} farmerNames={farmerNames} tagById={tagById} />
         <HealthLog records={health} />
 
         <p className={styles.footnote}>

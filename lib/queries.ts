@@ -19,7 +19,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       .order('created_at', { ascending: false }),
     supabase
       .from('animals')
-      .select('id,animal_id,species,breed,gender,status,farmer_id,created_at')
+      .select('id,animal_id,species,breed,gender,status,farmer_id,mother_id,father_id,generation,created_at')
       .order('created_at', { ascending: false }),
     supabase
       .from('health_log')
