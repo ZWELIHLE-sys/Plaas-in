@@ -20,3 +20,13 @@ export type Animal = {
   farmer_id: string
   created_at: string
 }
+
+export type HealthRecord = {
+  id: string
+  farmer_id: string
+  date: string
+  action_type: string | null
+  target: string | null
+  chemical_used: string | null
+  withdrawal_until: string | null
+}

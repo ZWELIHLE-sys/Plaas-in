@@ -1,8 +1,8 @@
 // Turns a farmer's free-text WhatsApp message into structured data.
 // Uses Claude when ANTHROPIC_API_KEY is set; otherwise (or on failure) falls
-// back to a free, dependency-light keyword parser so the product still works.
+// back to the free keyword parser in keyword-parser.ts so the product still works.
 import Anthropic from '@anthropic-ai/sdk'
-import { ALL_BREEDS } from '@/lib/constants'
+import { ruleBasedParse } from '@/lib/keyword-parser'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -24,10 +24,25 @@ export type ParsedProfile = {
   location?: string // the farmer's area / district
 }
 
+export type ParsedHealth = {
+  action_type?: string // Dipping | Vaccination | Treatment
+  target?: string // "10 Boran calves" | "Cow-04" | "all cattle"
+  chemical_used?: string // vaccine/medicine/dip name
+  withdrawal_days?: number // meat/milk withdrawal period, if stated
+  notes?: string
+}
+
 export type ParsedMessage = {
-  intent: 'register_animal' | 'show_herd' | 'set_profile' | 'other'
+  intent:
+    | 'register_animal'
+    | 'show_herd'
+    | 'set_profile'
+    | 'log_health'
+    | 'show_health'
+    | 'other'
   animals: ParsedAnimal[]
   profile?: ParsedProfile
+  health?: ParsedHealth
 }
 
 const SYSTEM_PROMPT = `You are the parser for Plaas-In, a WhatsApp farm record-keeper for South African farmers.
@@ -36,15 +51,17 @@ Read the farmer's message (English or Zulu) and call the record_message tool wit
 Intents:
 - "register_animal": adding/registering one or more livestock.
 - "show_herd": asking for a herd/livestock count or report.
-- "set_profile": the farmer is registering themselves or giving their name, farm name, or area/location.
+- "set_profile": registering themselves / giving name, farm name, or area/location.
+- "log_health": recording a dipping, vaccination, treatment, deworming or injection.
+- "show_health": asking for health/vaccination history.
 - "other": greetings, questions, or anything else.
 
 Rules:
 - species must be one of: Cattle, Goat, Sheep, Pig (map "cow/bull/calf/ox/heifer" -> Cattle).
 - Only set animal_id if the farmer explicitly gives a tag (e.g. "tag BOR-001").
-- If they say a number ("3 Boer goats"), set quantity to that number; otherwise 1.
-- Common SA breeds: Cattle = Nguni, Boran, Brahman, Angus, Jersey, Holstein; Goat = Boer, Kalahari Red, Saanen; Sheep = Dorper, Merino.
-- For set_profile, extract name, farm_name and location/area when present.`
+- Quantity: if they say a number ("3 Boer goats"), use it; otherwise 1.
+- SA breeds: Cattle = Nguni, Boran, Brahman, Angus, Jersey, Holstein; Goat = Boer, Kalahari Red, Saanen; Sheep = Dorper, Merino.
+- For log_health: action_type is Dipping, Vaccination or Treatment. target = which animals (e.g. "10 Boran calves"). chemical_used = the vaccine/medicine/disease named. withdrawal_days only if a withdrawal period is stated.`
 
 const TOOL: Anthropic.Tool = {
   name: 'record_message',
@@ -54,7 +71,7 @@ const TOOL: Anthropic.Tool = {
     properties: {
       intent: {
         type: 'string',
-        enum: ['register_animal', 'show_herd', 'set_profile', 'other'],
+        enum: ['register_animal', 'show_herd', 'set_profile', 'log_health', 'show_health', 'other'],
       },
       animals: {
         type: 'array',
@@ -78,6 +95,17 @@ const TOOL: Anthropic.Tool = {
           name: { type: 'string' },
           farm_name: { type: 'string' },
           location: { type: 'string' },
+        },
+      },
+      health: {
+        type: 'object',
+        description: 'Health event details (only when intent is log_health).',
+        properties: {
+          action_type: { type: 'string', enum: ['Dipping', 'Vaccination', 'Treatment'] },
+          target: { type: 'string' },
+          chemical_used: { type: 'string' },
+          withdrawal_days: { type: 'integer', minimum: 0 },
+          notes: { type: 'string' },
         },
       },
     },
@@ -112,80 +140,11 @@ export async function parseFarmerMessage(text: string): Promise<ParsedMessage> {
       intent: input.intent ?? 'other',
       animals: Array.isArray(input.animals) ? input.animals : [],
       profile: input.profile,
+      health: input.health,
     }
   } catch (err) {
     // e.g. out of credit / network problem — degrade gracefully.
     console.warn('[plaas-in] Claude parse failed, using keyword fallback:', err)
     return ruleBasedParse(text)
-  }
-}
-
-// --- Free keyword fallback (no API key required) --------------------------
-
-function detectSpecies(text: string): string | undefined {
-  if (/\b(cattle|cow|cows|bull|bulls|calf|calves|ox|oxen|heifer|heifers|steer|steers)\b/i.test(text)) return 'Cattle'
-  if (/\b(goat|goats|doe|does|buck|bucks|kid|kids)\b/i.test(text)) return 'Goat'
-  if (/\b(sheep|lamb|lambs|ram|rams|ewe|ewes)\b/i.test(text)) return 'Sheep'
-  if (/\b(pig|pigs|piglet|piglets|sow|sows|boar|boars|hog|hogs)\b/i.test(text)) return 'Pig'
-  return undefined
-}
-
-function detectGender(text: string): string | undefined {
-  if (/\b(bull|bulls|ram|rams|boar|boars|ox|oxen|steer|steers|buck|bucks|male)\b/i.test(text)) return 'Male'
-  if (/\b(cow|cows|ewe|ewes|sow|sows|heifer|heifers|doe|does|female)\b/i.test(text)) return 'Female'
-  return undefined
-}
-
-function detectBreed(text: string): string | undefined {
-  return ALL_BREEDS.find((b) => new RegExp(`\\b${b}\\b`, 'i').test(text))
-}
-
-// Reliable explicit profile syntax advertised in the welcome message:
-//   "Register farmer: John Dube, Green Acres, Dundee"
-function parseProfile(text: string): ParsedProfile | undefined {
-  const m = text.match(/register\s+farmer\s*:?\s*(.+)/i)
-  if (!m) return undefined
-  const [name, farm_name, location] = m[1].split(',').map((s) => s.trim())
-  const profile: ParsedProfile = {}
-  if (name) profile.name = name
-  if (farm_name) profile.farm_name = farm_name
-  if (location) profile.location = location
-  return Object.keys(profile).length ? profile : undefined
-}
-
-// A small rule-based parser covering the Phase 1 demo phrases. Good enough to
-// register a farmer, register animals, and run the herd report with no paid API.
-export function ruleBasedParse(text: string): ParsedMessage {
-  const profile = parseProfile(text)
-  if (profile) {
-    return { intent: 'set_profile', animals: [], profile }
-  }
-
-  const asksReport = /\b(herd|report|how many|count|summary|total|livestock|stock)\b/i.test(text)
-  const isAdding = /\b(add|added|adding|register|registered|new|got|bought|buy|born)\b/i.test(text)
-  if (asksReport && !isAdding) {
-    return { intent: 'show_herd', animals: [] }
-  }
-
-  // Extract a tag first so its digits aren't mistaken for a quantity.
-  const tagMatch =
-    text.match(/tag\s*[:#]?\s*([A-Za-z]{2,}-?\d+)/i) || text.match(/\b([A-Za-z]{2,}-\d+)\b/)
-  const animalId = tagMatch ? tagMatch[1].toUpperCase() : undefined
-  const withoutTag = tagMatch ? text.replace(tagMatch[0], ' ') : text
-
-  const species = detectSpecies(text)
-  const breed = detectBreed(text)
-  const gender = detectGender(text)
-
-  if (!species && !breed) {
-    return { intent: 'other', animals: [] }
-  }
-
-  const qtyMatch = withoutTag.match(/\b(\d{1,4})\b/)
-  const quantity = qtyMatch ? Math.max(1, parseInt(qtyMatch[1], 10)) : 1
-
-  return {
-    intent: 'register_animal',
-    animals: [{ species, breed, gender, animal_id: animalId, quantity }],
   }
 }
