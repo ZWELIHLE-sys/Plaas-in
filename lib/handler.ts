@@ -4,6 +4,7 @@
 import { getOrCreateFarmer } from '@/lib/supabase'
 import { parseFarmerMessage } from '@/lib/parser'
 import { registerAnimals, herdReport } from '@/lib/livestock'
+import { registerBirth, showBloodline } from '@/lib/bloodline'
 import { updateProfile } from '@/lib/profile'
 import { logHealth, healthReport } from '@/lib/health'
 import { BRAND } from '@/lib/constants'
@@ -19,6 +20,14 @@ export async function processMessage(from: string, text: string): Promise<string
       break
     case 'register_animal':
       reply = parsed.animals.length ? await registerAnimals(farmer.id, parsed.animals) : helpText()
+      break
+    case 'register_birth':
+      reply = await registerBirth(farmer.id, parsed.birth ?? {})
+      break
+    case 'show_bloodline':
+      reply = parsed.target_tag
+        ? await showBloodline(farmer.id, parsed.target_tag)
+        : 'ℹ️ Tell me which animal, e.g. "Show bloodline of BOR-001".'
       break
     case 'show_herd':
       reply = await herdReport(farmer.id)
@@ -49,8 +58,10 @@ function helpText(): string {
     '• Register farmer: John Dube, Green Acres, Dundee',
     '• Register a Boran bull, tag BOR-001',
     '• Added 3 Boer goats',
+    '• New calf born. Mother Cow-04, Father Bull-01',
     '• Vaccinated 10 calves for Blackquarter',
     '• Show herd',
     '• Show health',
+    '• Show bloodline of BOR-001',
   ].join('\n')
 }

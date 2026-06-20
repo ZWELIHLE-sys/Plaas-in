@@ -1,8 +1,10 @@
 // Turns a farmer's free-text WhatsApp message into structured data.
 // Uses Claude when ANTHROPIC_API_KEY is set; otherwise (or on failure) falls
-// back to the free keyword parser in keyword-parser.ts so the product still works.
+// back to the free keyword parser so the product still works. The Claude prompt
+// + tool schema live in parser-schema.ts.
 import Anthropic from '@anthropic-ai/sdk'
 import { ruleBasedParse } from '@/lib/keyword-parser'
+import { SYSTEM_PROMPT, TOOL } from '@/lib/parser-schema'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -16,6 +18,15 @@ export type ParsedAnimal = {
   animal_id?: string // human tag, e.g. BOR-001 (only if stated)
   primary_product?: string // Beef | Dairy | Wool | Mutton | Pork
   quantity?: number // how many of this kind (default 1)
+}
+
+export type ParsedBirth = {
+  animal_id?: string // the calf's tag, if given
+  species?: string
+  breed?: string
+  gender?: string
+  mother_tag?: string
+  father_tag?: string
 }
 
 export type ParsedProfile = {
@@ -35,82 +46,18 @@ export type ParsedHealth = {
 export type ParsedMessage = {
   intent:
     | 'register_animal'
+    | 'register_birth'
     | 'show_herd'
+    | 'show_bloodline'
     | 'set_profile'
     | 'log_health'
     | 'show_health'
     | 'other'
   animals: ParsedAnimal[]
+  birth?: ParsedBirth
+  target_tag?: string
   profile?: ParsedProfile
   health?: ParsedHealth
-}
-
-const SYSTEM_PROMPT = `You are the parser for Plaas-In, a WhatsApp farm record-keeper for South African farmers.
-Read the farmer's message (English or Zulu) and call the record_message tool with structured data.
-
-Intents:
-- "register_animal": adding/registering one or more livestock.
-- "show_herd": asking for a herd/livestock count or report.
-- "set_profile": registering themselves / giving name, farm name, or area/location.
-- "log_health": recording a dipping, vaccination, treatment, deworming or injection.
-- "show_health": asking for health/vaccination history.
-- "other": greetings, questions, or anything else.
-
-Rules:
-- species must be one of: Cattle, Goat, Sheep, Pig (map "cow/bull/calf/ox/heifer" -> Cattle).
-- Only set animal_id if the farmer explicitly gives a tag (e.g. "tag BOR-001").
-- Quantity: if they say a number ("3 Boer goats"), use it; otherwise 1.
-- SA breeds: Cattle = Nguni, Boran, Brahman, Angus, Jersey, Holstein; Goat = Boer, Kalahari Red, Saanen; Sheep = Dorper, Merino.
-- For log_health: action_type is Dipping, Vaccination or Treatment. target = which animals (e.g. "10 Boran calves"). chemical_used = the vaccine/medicine/disease named. withdrawal_days only if a withdrawal period is stated.`
-
-const TOOL: Anthropic.Tool = {
-  name: 'record_message',
-  description: "Record the structured interpretation of the farmer's message.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      intent: {
-        type: 'string',
-        enum: ['register_animal', 'show_herd', 'set_profile', 'log_health', 'show_health', 'other'],
-      },
-      animals: {
-        type: 'array',
-        description: 'Animals to register (empty unless intent is register_animal).',
-        items: {
-          type: 'object',
-          properties: {
-            species: { type: 'string' },
-            breed: { type: 'string' },
-            gender: { type: 'string', enum: ['Male', 'Female'] },
-            animal_id: { type: 'string' },
-            primary_product: { type: 'string' },
-            quantity: { type: 'integer', minimum: 1 },
-          },
-        },
-      },
-      profile: {
-        type: 'object',
-        description: 'Farmer details (only when intent is set_profile).',
-        properties: {
-          name: { type: 'string' },
-          farm_name: { type: 'string' },
-          location: { type: 'string' },
-        },
-      },
-      health: {
-        type: 'object',
-        description: 'Health event details (only when intent is log_health).',
-        properties: {
-          action_type: { type: 'string', enum: ['Dipping', 'Vaccination', 'Treatment'] },
-          target: { type: 'string' },
-          chemical_used: { type: 'string' },
-          withdrawal_days: { type: 'integer', minimum: 0 },
-          notes: { type: 'string' },
-        },
-      },
-    },
-    required: ['intent', 'animals'],
-  },
 }
 
 export async function parseFarmerMessage(text: string): Promise<ParsedMessage> {
@@ -139,6 +86,8 @@ export async function parseFarmerMessage(text: string): Promise<ParsedMessage> {
     return {
       intent: input.intent ?? 'other',
       animals: Array.isArray(input.animals) ? input.animals : [],
+      birth: input.birth,
+      target_tag: input.target_tag,
       profile: input.profile,
       health: input.health,
     }
