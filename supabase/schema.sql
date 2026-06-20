@@ -76,3 +76,13 @@ create table if not exists sales (
   amount        numeric(12,2),
   created_at    timestamptz not null default now()
 );
+
+-- ---------------------------------------------------------------------------
+-- Privileges — the server connects as `service_role`. On some projects the
+-- automatic grants are missing, causing "permission denied for table".
+-- These statements are idempotent and safe to re-run.
+-- ---------------------------------------------------------------------------
+grant usage on schema public to service_role;
+grant select, insert, update, delete on all tables in schema public to service_role;
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to service_role;
