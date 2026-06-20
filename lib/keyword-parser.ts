@@ -2,7 +2,7 @@
 // if a Claude call fails). Covers the Phase 1 demo phrases: farmer profile,
 // animal registration, births + bloodline, herd report, and health logging.
 import { ALL_BREEDS } from '@/lib/constants'
-import type { ParsedBirth, ParsedHealth, ParsedMessage, ParsedProfile } from '@/lib/parser'
+import type { ParsedBirth, ParsedHealth, ParsedMessage, ParsedProfile, ParsedSale } from '@/lib/parser'
 
 const REPORT_WORDS = /\b(show|report|history|list|summary|view|of)\b/i
 const TAG = /\b([A-Za-z]{2,}-\d+)\b/
@@ -90,6 +90,34 @@ function parseHealth(text: string, action_type: string): ParsedHealth {
   return health
 }
 
+// "Sold Bull-02 at Dundee Auction for R18,000 to Mr Sithole"
+function parseSale(text: string): ParsedSale | undefined {
+  if (!/\bsold\b/i.test(text)) return undefined
+  const sale: ParsedSale = {}
+
+  const amt = text.match(/\bR\s?([\d][\d,\s]*)/i) || text.match(/\bfor\s+R?\s?([\d][\d,\s]*)/i)
+  if (amt) {
+    const n = parseInt(amt[1].replace(/[,\s]/g, ''), 10)
+    if (!Number.isNaN(n)) sale.amount = n
+  }
+
+  if (/\bauction\b/i.test(text)) sale.sale_type = 'Auction'
+  else if (/\b(butchery|abattoir)\b/i.test(text)) sale.sale_type = 'Butchery'
+  else sale.sale_type = 'Direct'
+
+  const buyer = text.match(/\bto\s+([A-Za-z][A-Za-z .'-]*?)(?:\s+(?:at|for)\b|[.,]|$)/i)
+  if (buyer) sale.buyer_name = buyer[1].trim()
+
+  const loc = text.match(
+    /\bat\s+([A-Za-z][A-Za-z .'-]*?)(?:\s+(?:auction|butchery|abattoir|for|to)\b|[.,]|$)/i,
+  )
+  if (loc) sale.sale_location = loc[1].trim()
+
+  const item = text.match(/\bsold\s+(.+?)(?:\s+(?:at|for|to)\b|[.,]|$)/i)
+  if (item) sale.item_details = item[1].trim()
+  return sale
+}
+
 export function ruleBasedParse(text: string): ParsedMessage {
   const profile = parseProfile(text)
   if (profile) return { intent: 'set_profile', animals: [], profile }
@@ -102,6 +130,13 @@ export function ruleBasedParse(text: string): ParsedMessage {
 
   const birth = parseBirth(text)
   if (birth) return { intent: 'register_birth', animals: [], birth }
+
+  const mentionsSales = /\b(sales|ledger|income|revenue|earnings)\b/i.test(text)
+  if (mentionsSales && REPORT_WORDS.test(text)) {
+    return { intent: 'show_sales', animals: [] }
+  }
+  const sale = parseSale(text)
+  if (sale) return { intent: 'log_sale', animals: [], sale }
 
   const mentionsHealth = /\b(health|vaccin\w*|treatment|treated|dipping|dipped)\b/i.test(text)
   if (mentionsHealth && REPORT_WORDS.test(text)) {

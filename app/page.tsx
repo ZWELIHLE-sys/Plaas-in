@@ -7,16 +7,19 @@ import { HerdBreakdown } from '@/components/HerdBreakdown'
 import { FarmerRegistry } from '@/components/FarmerRegistry'
 import { RecentLivestock } from '@/components/RecentLivestock'
 import { HealthLog } from '@/components/HealthLog'
+import { SalesLedger } from '@/components/SalesLedger'
+import { formatRand } from '@/lib/format'
 import styles from './page.module.css'
 
 // Always render fresh data (this reads the database on each request).
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
-  const { farmers, animals, health, salesCount, error } = await getDashboardData()
+  const { farmers, animals, health, sales, error } = await getDashboardData()
 
   const activeAnimals = animals.filter((a) => a.status === 'Active')
-  const recordsProcessed = animals.length + health.length + salesCount
+  const recordsProcessed = animals.length + health.length + sales.length
+  const totalIncome = sales.reduce((sum, s) => sum + (s.amount ?? 0), 0)
 
   const herdCounts = new Map<string, number>()
   for (const a of activeAnimals) {
@@ -55,12 +58,13 @@ export default async function DashboardPage() {
           farmers={farmers.length}
           livestock={activeAnimals.length}
           records={recordsProcessed}
-          sales={salesCount}
+          income={formatRand(totalIncome)}
         />
         <HerdBreakdown counts={[...herdCounts.entries()]} />
         <FarmerRegistry farmers={farmers} animalCounts={animalCounts} />
         <RecentLivestock animals={animals} farmerNames={farmerNames} tagById={tagById} />
         <HealthLog records={health} />
+        <SalesLedger sales={sales} />
 
         <p className={styles.footnote}>
           Records are stored securely and are never deleted — sold or deceased animals keep their

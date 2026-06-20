@@ -43,6 +43,15 @@ export type ParsedHealth = {
   notes?: string
 }
 
+export type ParsedSale = {
+  item_details?: string // what was sold, e.g. "Bull-02" or "2 Boer goats"
+  product_type?: string // Cattle | Goat | ... (the kind sold)
+  sale_type?: string // Direct | Auction | Butchery
+  buyer_name?: string
+  sale_location?: string
+  amount?: number // rand
+}
+
 export type ParsedMessage = {
   intent:
     | 'register_animal'
@@ -52,12 +61,15 @@ export type ParsedMessage = {
     | 'set_profile'
     | 'log_health'
     | 'show_health'
+    | 'log_sale'
+    | 'show_sales'
     | 'other'
   animals: ParsedAnimal[]
   birth?: ParsedBirth
   target_tag?: string
   profile?: ParsedProfile
   health?: ParsedHealth
+  sale?: ParsedSale
 }
 
 export async function parseFarmerMessage(text: string): Promise<ParsedMessage> {
@@ -90,6 +102,7 @@ export async function parseFarmerMessage(text: string): Promise<ParsedMessage> {
       target_tag: input.target_tag,
       profile: input.profile,
       health: input.health,
+      sale: input.sale,
     }
   } catch (err) {
     // e.g. out of credit / network problem — degrade gracefully.

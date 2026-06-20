@@ -30,3 +30,8 @@ export function addDays(date: Date, days: number): Date {
 export function toISODate(date: Date): string {
   return date.toISOString().slice(0, 10)
 }
+
+// 18000 -> "R18,000" (South African rand, no cents).
+export function formatRand(amount: number): string {
+  return `R${Math.round(amount).toLocaleString('en-ZA')}`
+}
