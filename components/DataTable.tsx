@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import styles from './DataTable.module.css'
 
 // A presentational table. `rows` cells may be plain text or React nodes (badges).
 export function DataTable({
@@ -11,25 +12,25 @@ export function DataTable({
   empty: string
 }) {
   if (rows.length === 0) {
-    return <p className="px-5 py-6 text-stone-500">{empty}</p>
+    return <p className={styles.empty}>{empty}</p>
   }
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-stone-50 text-stone-500">
+    <div className={styles.scroll}>
+      <table className={styles.table}>
+        <thead>
           <tr>
             {head.map((h) => (
-              <th key={h} className="px-5 py-3 font-medium">
+              <th key={h} className={styles.th}>
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-stone-100">
+        <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="hover:bg-stone-50">
+            <tr key={i} className={styles.row}>
               {row.map((cell, j) => (
-                <td key={j} className="px-5 py-3">
+                <td key={j} className={styles.td}>
                   {cell}
                 </td>
               ))}

@@ -1,0 +1,22 @@
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 2.4rem;
+  height: 2.4rem;
+}
+
+.disc {
+  fill: rgba(255, 255, 255, 0.16);
+}
+
+.stem {
+  color: var(--sa-gold);
+}
+
+.leaf {
+  fill: #ffffff;
+}
