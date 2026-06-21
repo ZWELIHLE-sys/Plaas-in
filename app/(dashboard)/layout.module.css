@@ -1,0 +1,50 @@
+.layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+.main {
+  min-width: 0; /* lets tables scroll instead of stretching the grid */
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.chartsRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.error {
+  background: #fdecec;
+  border: 1px solid #f5c2c2;
+  color: #9a2222;
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+}
+
+@media (min-width: 760px) {
+  .chartsRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .content {
+    padding: 1.1rem;
+  }
+}

@@ -21,10 +21,10 @@ export const ALL_BREEDS: string[] = Object.values(BREEDS_BY_SPECIES).flat()
 
 export const SPECIES = ['Cattle', 'Goat', 'Sheep', 'Pig'] as const
 
-// Young-animal name + auto-tag prefix per species (used when registering births).
-export const OFFSPRING: Record<string, { name: string; prefix: string }> = {
-  Cattle: { name: 'Calf', prefix: 'CALF' },
-  Goat: { name: 'Kid', prefix: 'KID' },
-  Sheep: { name: 'Lamb', prefix: 'LAMB' },
-  Pig: { name: 'Piglet', prefix: 'PIGL' },
+// Young-animal names per species (used in birth confirmations).
+export const OFFSPRING: Record<string, { name: string; plural: string }> = {
+  Cattle: { name: 'Calf', plural: 'Calves' },
+  Goat: { name: 'Kid', plural: 'Kids' },
+  Sheep: { name: 'Lamb', plural: 'Lambs' },
+  Pig: { name: 'Piglet', plural: 'Piglets' },
 }

@@ -8,6 +8,7 @@ import { registerBirth, showBloodline } from '@/lib/bloodline'
 import { updateProfile } from '@/lib/profile'
 import { logHealth, healthReport } from '@/lib/health'
 import { logSale, salesReport } from '@/lib/sales'
+import { castrateAnimal } from '@/lib/breeding'
 import { BRAND } from '@/lib/constants'
 
 export async function processMessage(from: string, text: string): Promise<string> {
@@ -20,10 +21,13 @@ export async function processMessage(from: string, text: string): Promise<string
       reply = await updateProfile(farmer.id, parsed.profile ?? {})
       break
     case 'register_animal':
-      reply = parsed.animals.length ? await registerAnimals(farmer.id, parsed.animals) : helpText()
+      reply = parsed.animals.length ? await registerAnimals(farmer, parsed.animals) : helpText()
       break
     case 'register_birth':
-      reply = await registerBirth(farmer.id, parsed.birth ?? {})
+      reply = await registerBirth(farmer, parsed.birth ?? {})
+      break
+    case 'castrate':
+      reply = await castrateAnimal(farmer.id, parsed.castration?.tag, parsed.castration?.reason)
       break
     case 'show_bloodline':
       reply = parsed.target_tag
@@ -65,7 +69,9 @@ function helpText(): string {
     '• Register farmer: John Dube, Green Acres, Dundee',
     '• Register a Boran bull, tag BOR-001',
     '• Added 3 Boer goats',
-    '• New calf born. Mother Cow-04, Father Bull-01',
+    '• Cow-04 gave birth to a calf, father Bull-01',
+    '• Goat-02 gave birth to 3 kids, father Buck-01',
+    '• Castrate Bull-03, reason: fattening',
     '• Vaccinated 10 calves for Blackquarter',
     '• Sold Bull-02 at Dundee Auction for R18,000 to Mr Sithole',
     '• Show herd',

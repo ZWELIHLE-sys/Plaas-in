@@ -1,10 +1,22 @@
+import type { ReactNode } from 'react'
 import styles from './StatCard.module.css'
 
-export function StatCard({ label, value }: { label: string; value: number | string }) {
+export function StatCard({
+  label,
+  value,
+  icon,
+}: {
+  label: string
+  value: number | string
+  icon: ReactNode
+}) {
   return (
     <div className={styles.card}>
-      <div className={styles.value}>{value}</div>
-      <div className={styles.label}>{label}</div>
+      <span className={styles.icon}>{icon}</span>
+      <div>
+        <div className={styles.value}>{value}</div>
+        <div className={styles.label}>{label}</div>
+      </div>
     </div>
   )
 }

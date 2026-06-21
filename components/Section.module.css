@@ -7,10 +7,21 @@
 }
 
 .title {
-  padding: 1rem 1.25rem;
-  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.95rem 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   border-bottom: 1px solid var(--border);
+}
+
+.title::before {
+  content: '';
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 2px;
+  background: var(--sa-green);
 }
 
 .bodyPadded {
