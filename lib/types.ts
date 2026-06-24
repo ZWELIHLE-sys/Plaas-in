@@ -17,6 +17,7 @@ export type Animal = {
   breed: string | null
   gender: string | null
   status: string | null
+  breeding_status: string | null
   farmer_id: string
   mother_id: string | null
   father_id: string | null

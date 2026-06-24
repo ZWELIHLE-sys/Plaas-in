@@ -15,6 +15,7 @@ Intents:
 - "show_health": asking for health/vaccination history.
 - "log_sale": recording a sale of livestock (sold ... for R... to ... at ...).
 - "show_sales": asking for sales / income / ledger history.
+- "castrate": recording that a male animal was castrated.
 - "other": greetings, questions, or anything else.
 
 Rules:
@@ -22,7 +23,8 @@ Rules:
 - Only set animal_id / tags if explicitly stated (e.g. "tag BOR-001", "Mother Cow-04").
 - Quantity: use the stated number, else 1.
 - SA breeds: Cattle = Nguni, Boran, Brahman, Angus, Jersey, Holstein; Goat = Boer, Kalahari Red, Saanen; Sheep = Dorper, Merino.
-- register_birth: set birth.mother_tag / birth.father_tag to the parents' tags, plus species/gender/breed and animal_id if the calf was given a tag.
+- register_birth: set birth.mother_tag / birth.father_tag to the parents' tags, plus species/gender/breed. Set birth.quantity to the number of offspring born (a litter), e.g. "3 kids" -> 3, "twins" -> 2; default 1. Only set animal_id when a single offspring is given an explicit tag.
+- castrate: set castration.tag to the animal's tag and castration.reason if a reason is given.
 - show_bloodline: set target_tag to the animal whose lineage is asked for.
 - log_health: action_type is Dipping, Vaccination or Treatment; target = which animals; chemical_used = vaccine/medicine/disease; withdrawal_days only if stated.
 - log_sale: item_details = what was sold (tag like "Bull-02" or "2 goats"); sale_type = Direct, Auction or Butchery; amount = rand number; set buyer_name and sale_location when given.`
@@ -45,6 +47,7 @@ export const TOOL: Anthropic.Tool = {
           'show_health',
           'log_sale',
           'show_sales',
+          'castrate',
           'other',
         ],
       },
@@ -73,6 +76,7 @@ export const TOOL: Anthropic.Tool = {
           gender: { type: 'string', enum: ['Male', 'Female'] },
           mother_tag: { type: 'string' },
           father_tag: { type: 'string' },
+          quantity: { type: 'integer', minimum: 1 },
         },
       },
       target_tag: {
@@ -109,6 +113,14 @@ export const TOOL: Anthropic.Tool = {
           buyer_name: { type: 'string' },
           sale_location: { type: 'string' },
           amount: { type: 'number', minimum: 0 },
+        },
+      },
+      castration: {
+        type: 'object',
+        description: 'Castration details (only when intent is castrate).',
+        properties: {
+          tag: { type: 'string' },
+          reason: { type: 'string' },
         },
       },
     },

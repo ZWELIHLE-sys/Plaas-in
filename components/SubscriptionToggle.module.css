@@ -1,0 +1,33 @@
+.select {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.select:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.trial {
+  color: var(--tone-info-fg);
+  background: var(--tone-info-bg);
+  border-color: #cfe0f7;
+}
+
+.active {
+  color: var(--tone-active-fg);
+  background: var(--tone-active-bg);
+  border-color: #bfe6cf;
+}
+
+.inactive {
+  color: var(--tone-neutral-fg);
+  background: var(--tone-neutral-bg);
+  border-color: #d8dad6;
+}

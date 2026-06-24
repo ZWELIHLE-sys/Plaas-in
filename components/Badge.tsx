@@ -6,6 +6,8 @@ const TONE: Record<string, string> = {
   Sold: styles.warn,
   Deceased: styles.neutral,
   Breeding: styles.purple,
+  Intact: styles.active,
+  Castrated: styles.warn,
   active: styles.active,
   trial: styles.info,
 }

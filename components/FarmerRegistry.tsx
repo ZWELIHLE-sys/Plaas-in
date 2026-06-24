@@ -1,6 +1,6 @@
 import { Section } from './Section'
 import { DataTable } from './DataTable'
-import { Badge } from './Badge'
+import { SubscriptionToggle } from './SubscriptionToggle'
 import { formatDate } from '@/lib/format'
 import type { Farmer } from '@/lib/types'
 
@@ -21,7 +21,7 @@ export function FarmerRegistry({
           f.farm_name ?? '—',
           f.location ?? '—',
           f.phone,
-          <Badge key={f.id} text={f.subscription_status ?? 'trial'} />,
+          <SubscriptionToggle key={f.id} farmerId={f.id} status={f.subscription_status ?? 'trial'} />,
           String(animalCounts[f.id] ?? 0),
           formatDate(f.created_at),
         ])}

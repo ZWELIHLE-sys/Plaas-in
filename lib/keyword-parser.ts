@@ -44,13 +44,24 @@ function parseProfile(text: string): ParsedProfile | undefined {
   return Object.keys(profile).length ? profile : undefined
 }
 
-// "New calf born. Mother Cow-04, Father Bull-01"
-function parseBirth(text: string): ParsedBirth | undefined {
-  const mother = text.match(/\b(?:mother|dam|mum|mom)\s*[:#]?\s*([A-Za-z]{2,}-?\d+)/i)
-  const father = text.match(/\b(?:father|sire|dad)\s*[:#]?\s*([A-Za-z]{2,}-?\d+)/i)
-  if (!mother && !father) return undefined
+// Births, phrased either way:
+//   "New calf born. Mother Cow-04, Father Bull-01"
+//   "Cow-04 gave birth to twins, father Bull-01"
+const BIRTH_PHRASE = /\b(gave birth|was born|were born|born|calved|lambed|kidded|farrowed|delivered)\b/i
 
-  // Describe the calf from the text with the parent clauses removed, so the
+function parseBirth(text: string): ParsedBirth | undefined {
+  const motherKw = text.match(/\b(?:mother|dam|mum|mom)\s*[:#]?\s*([A-Za-z]{2,}-?\d+)/i)
+  // The dam stated as the subject: "<tag> gave birth / had / calved ...".
+  const motherSubj = text.match(
+    /\b([A-Za-z]{2,}-?\d+)\s+(?:gave birth|had|calved|lambed|kidded|farrowed|delivered)/i,
+  )
+  const father = text.match(/\b(?:father|sire|dad)\s*[:#]?\s*([A-Za-z]{2,}-?\d+)/i)
+  const mother = motherKw ?? motherSubj
+
+  // It's a birth if a parent is named OR the message uses a birth phrase.
+  if (!mother && !father && !BIRTH_PHRASE.test(text)) return undefined
+
+  // Describe the offspring from the text with the parent clauses removed, so the
   // mother's/father's own species/gender words don't get attributed to the calf.
   let calfText = text
   if (mother) calfText = calfText.replace(mother[0], ' ')
@@ -67,7 +78,29 @@ function parseBirth(text: string): ParsedBirth | undefined {
   if (gender) birth.gender = gender
   const breed = detectBreed(calfText)
   if (breed) birth.breed = breed
+
+  // Litter size: "3 kids", "gave birth to 3", "twins", "triplets".
+  const qty =
+    calfText.match(/\b(\d{1,2})\s*(?:kid|kids|lamb|lambs|calf|calves|piglet|piglets|young|babies|offspring)\b/i) ||
+    calfText.match(/gave birth to\s+(\d{1,2})/i) ||
+    calfText.match(/\b(\d{1,2})\s+born\b/i)
+  if (qty) birth.quantity = Math.max(1, parseInt(qty[1], 10))
+  else if (/\btriplets?\b/i.test(calfText)) birth.quantity = 3
+  else if (/\btwins?\b/i.test(calfText)) birth.quantity = 2
+
   return birth
+}
+
+// "Castrate Bull-03, reason: fattening"
+function parseCastration(text: string): { tag?: string; reason?: string } | undefined {
+  if (!/\bcastrat/i.test(text)) return undefined
+  const fromVerb = text.match(/castrat\w*\s+([A-Za-z]{2,}-?\d+)/i)
+  const tag = (fromVerb?.[1] ?? text.match(TAG)?.[1])?.toUpperCase()
+  const reason =
+    text.match(/reason\s*[:\-]?\s*(.+)$/i)?.[1]?.trim() ||
+    text.match(/\bbecause\s+(.+)$/i)?.[1]?.trim() ||
+    text.match(/\bfor\s+(.+)$/i)?.[1]?.trim()
+  return { tag, reason }
 }
 
 function parseHealth(text: string, action_type: string): ParsedHealth {
@@ -121,6 +154,9 @@ function parseSale(text: string): ParsedSale | undefined {
 export function ruleBasedParse(text: string): ParsedMessage {
   const profile = parseProfile(text)
   if (profile) return { intent: 'set_profile', animals: [], profile }
+
+  const castration = parseCastration(text)
+  if (castration) return { intent: 'castrate', animals: [], castration }
 
   const mentionsLineage = /\b(bloodline|lineage|pedigree|ancestry|family tree|parents)\b/i.test(text)
   const tag = text.match(TAG)?.[1]?.toUpperCase()

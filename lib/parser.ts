@@ -21,12 +21,18 @@ export type ParsedAnimal = {
 }
 
 export type ParsedBirth = {
-  animal_id?: string // the calf's tag, if given
+  animal_id?: string // the calf's tag, if given (only when a single offspring)
   species?: string
   breed?: string
   gender?: string
   mother_tag?: string
   father_tag?: string
+  quantity?: number // number of offspring in this birth (litter)
+}
+
+export type ParsedCastration = {
+  tag?: string
+  reason?: string
 }
 
 export type ParsedProfile = {
@@ -63,6 +69,7 @@ export type ParsedMessage = {
     | 'show_health'
     | 'log_sale'
     | 'show_sales'
+    | 'castrate'
     | 'other'
   animals: ParsedAnimal[]
   birth?: ParsedBirth
@@ -70,6 +77,7 @@ export type ParsedMessage = {
   profile?: ParsedProfile
   health?: ParsedHealth
   sale?: ParsedSale
+  castration?: ParsedCastration
 }
 
 export async function parseFarmerMessage(text: string): Promise<ParsedMessage> {
@@ -103,6 +111,7 @@ export async function parseFarmerMessage(text: string): Promise<ParsedMessage> {
       profile: input.profile,
       health: input.health,
       sale: input.sale,
+      castration: input.castration,
     }
   } catch (err) {
     // e.g. out of credit / network problem — degrade gracefully.

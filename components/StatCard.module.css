@@ -1,32 +1,35 @@
 .card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  padding: 1.25rem;
-  position: relative;
-  overflow: hidden;
+  padding: 1.1rem 1.25rem;
 }
 
-.card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--sa-green);
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  border-radius: 12px;
+  background: var(--tone-active-bg);
+  color: var(--sa-green-dark);
+  flex-shrink: 0;
 }
 
 .value {
-  font-size: 2rem;
+  font-size: 1.7rem;
   font-weight: 800;
-  color: var(--sa-green-dark);
+  color: var(--text);
   line-height: 1.1;
 }
 
 .label {
-  margin-top: 0.35rem;
-  font-size: 0.85rem;
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
 }

@@ -14,14 +14,15 @@ export function RecentLivestock({
   return (
     <Section title="Recent livestock">
       <DataTable
-        head={['Tag', 'Species', 'Breed', 'Gender', 'Status', 'Farmer', 'Added']}
+        head={['Tag', 'Species', 'Breed', 'Gender', 'Status', 'Breeding', 'Farmer', 'Added']}
         empty={'No animals yet — text "Added 3 Boer goats" to the WhatsApp number.'}
         rows={animals.slice(0, 25).map((a) => [
           a.animal_id ?? '—',
           a.species ?? '—',
           a.breed ?? '—',
           a.gender ?? '—',
-          <Badge key={a.id} text={a.status ?? 'Active'} />,
+          <Badge key={`s-${a.id}`} text={a.status ?? 'Active'} />,
+          <Badge key={`b-${a.id}`} text={a.breeding_status ?? 'Intact'} />,
           farmerNames[a.farmer_id] ?? '—',
           formatDate(a.created_at),
         ])}
